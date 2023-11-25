@@ -5,8 +5,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ex1 {
+public class ex2 {
     public static final  String SOURCE_FILE = "";
     public static final String DESTINATION_FILE = "";
     public static void main(String[] args) throws IOException {
@@ -14,8 +16,8 @@ public class ex1 {
         BufferedImage resultImage = new BufferedImage(originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_RGB);
 
         long startTime = System.currentTimeMillis();
-
-        recolorSingleThreaded(originalImage, resultImage);
+        int numberOfThreads = 6;
+        recolorMultiThread(originalImage, resultImage, numberOfThreads);
 
         long endTime = System.currentTimeMillis();
         long duration = endTime - startTime;
@@ -23,6 +25,33 @@ public class ex1 {
         File outputFile = new File(DESTINATION_FILE);
         ImageIO.write(resultImage, "jpg", outputFile);
         System.out.println(duration);
+
+    }
+
+    public static void recolorMultiThread(BufferedImage originalImage, BufferedImage resultImage, int numberOfThreads){
+        List<Thread> threads = new ArrayList<>();
+        int width = originalImage.getWidth();
+        int height = originalImage.getHeight();
+
+        for (int i = 0; i < numberOfThreads; i++) {
+            final int threadMultiplier = i;
+
+            Thread thread = new Thread(() -> {
+                int leftCorner = 0;
+                int topCorner = height * threadMultiplier;
+
+                recolorImage(originalImage, resultImage, leftCorner, topCorner, width, height);
+            });
+            threads.add(thread);
+        }
+        for (Thread thread : threads){
+            thread.start();
+        }
+        for (Thread thread : threads){
+            try {
+                thread.join();
+            }catch (InterruptedException e){}
+        }
 
     }
     public static void recolorSingleThreaded(BufferedImage originalImage, BufferedImage resultImage){
